@@ -1,3 +1,23 @@
+//////////////////////////////////////////////////////////////////////////////////
+// Company: UT Austin
+// Engineer: Harsh Bakadia
+// 
+// Create Date: 04/24/2024 08:00:07 PM
+// Design Name: 
+// Module Name: Memory.v
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
 module Memory(CS, WE, CLK, ADDR, Mem_Bus);
   input CS;
   input WE;
@@ -12,6 +32,7 @@ module Memory(CS, WE, CLK, ADDR, Mem_Bus);
   initial
   begin
     /* Write your Verilog-Text IO code here */
+    $readmemb("LED_Rotate.mem", RAM);
   end
 
   assign Mem_Bus = ((CS == 1'b0) || (WE == 1'b1)) ? 32'bZ : data_out;

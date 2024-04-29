@@ -27,11 +27,12 @@
 `define f_code instr[5:0]
 `define numshift instr[10:6]
 
-module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
-  input CLK, RST;
-  output reg CS, WE;
-  output [6:0] ADDR;
-  inout [31:0] Mem_Bus;
+module MIPS (
+  input CLK, RST,
+  output reg CS, WE,
+  output [7:0] R1_Out,
+  output [6:0] ADDR,
+  inout [31:0] Mem_Bus);
 
   //special instructions (opcode == 000000), values of F code (bits 5-0):
   parameter add = 6'b100000;
@@ -43,6 +44,11 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
   parameter srl = 6'b000010;
   parameter sll = 6'b000000;
   parameter jr = 6'b001000;
+  parameter rbit = 6'b101111;
+  parameter rev = 6'b110000;
+  parameter add8 = 6'b101101;
+  parameter sadd = 6'b110001;
+  parameter ssub = 6'b110010;
 
   //non-special instructions, values of opcodes:
   parameter addi = 6'b001000;
@@ -53,6 +59,8 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
   parameter beq = 6'b000100;
   parameter bne = 6'b000101;
   parameter j = 6'b000010;
+  parameter jal = 6'b000011;
+  parameter lui = 6'b001111;
 
   //instruction format
   parameter R = 2'd0;
@@ -70,6 +78,8 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
   reg fetchDorI;
   wire [4:0] dr;
   reg [2:0] state, nstate;
+  
+  wire [7:0] R1_Low;
 
   //combinational
   assign imm_ext = (instr[15] == 1)? {16'hFFFF, instr[15:0]} : {16'h0000, instr[15:0]};//Sign extend immediate field
@@ -82,7 +92,7 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
 
   //drive memory bus only during writes
   assign ADDR = (fetchDorI)? pc : alu_result_save[6:0]; //ADDR Mux
-  REG Register(CLK, regw, dr, `sr1, `sr2, reg_in, readreg1, readreg2);
+  REG Register(CLK, regw, dr, `sr1, `sr2, reg_in, R1_Low, readreg1, readreg2);
 
   initial begin
     op = and1; opsave = and1;
@@ -125,6 +135,8 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
           end
           else if (`opcode == andi) op = and1;
           else if (`opcode == ori) op = or1;
+          else if (`opcode == jal) op = jal;
+          else if (`opcode == lui) op = lui;
         end
       end
       2: begin //execute
@@ -146,10 +158,54 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
           npc = alu_in_A[6:0];
           nstate = 3'd0;
         end
+        
+        else if(opsave == jal) begin
+          alu_result = npc;
+          npc = instr[25:0];
+        end
+        else if(opsave == lui) begin
+          alu_result = imm_ext << 16;
+        end
+        else if(opsave == rbit) begin
+          for(integer i=0; i<32; i=i+1) begin
+            alu_result[i] = alu_in_B[31-i];
+          end 
+        end
+        else if(opsave == rev) begin
+            alu_result[31:24] = alu_in_B[7:0];
+            alu_result[23:16] = alu_in_B[15:8];
+            alu_result[15:8] = alu_in_B[23:16];
+            alu_result[7:0] = alu_in_B[31:24]; 
+        end
+        else if(opsave == add8) begin
+          alu_result[31:24] = alu_in_A[31:24] + alu_in_B[31:24];
+          alu_result[23:16] = alu_in_A[23:16] + alu_in_B[23:16];
+          alu_result[15:8] = alu_in_A[15:8] + alu_in_B[15:8];
+          alu_result[7:0] = alu_in_A[7:0] + alu_in_B[7:0];
+        end 
+        else if(opsave == sadd) begin
+            if((alu_in_A + alu_in_B) > 32'hFFFFFFFF) begin
+                alu_result = 32'hFFFFFFFF;
+            end
+            else begin
+                alu_result = alu_in_A + alu_in_B;
+            end
+        end
+        else if(opsave == ssub) begin
+            if(alu_in_A < alu_in_B) begin
+                alu_result = 0;
+            end
+            else begin
+                alu_result = alu_in_A - alu_in_B;
+            end
+        end
+        
       end
       3: begin //prepare to write to mem
         nstate = 3'd0;
-        if ((format == R)||(`opcode == addi)||(`opcode == andi)||(`opcode == ori)) regw = 1;
+        if ((format == R)||(`opcode == addi)||(`opcode == andi)||(`opcode == ori)||
+            (`opcode == jal)||(`opcode == lui)||(`opcode == rbit) || (`opcode == rev) || 
+            (`opcode == add8) || (`opcode == sadd) || (`opcode == ssub)) regw = 1;
         else if (`opcode == sw) begin
           CS = 1;
           WE = 1;
@@ -188,6 +244,7 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
     else if (state == 3'd2) alu_result_save <= alu_result;
 
   end //always
+//////////////////////////////////////////////////////////////////////////////////
+  assign R1_Out = R1_Low;
 
 endmodule
-
