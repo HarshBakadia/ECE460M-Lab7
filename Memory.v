@@ -1,3 +1,23 @@
+//////////////////////////////////////////////////////////////////////////////////
+// Company: UT Austin
+// Engineer: Harsh Bakadia
+// 
+// Create Date: 04/24/2024 08:00:07 PM
+// Design Name: 
+// Module Name: Memory.v
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
 module Memory(CS, WE, CLK, ADDR, Mem_Bus);
   input CS;
   input WE;
@@ -8,10 +28,10 @@ module Memory(CS, WE, CLK, ADDR, Mem_Bus);
   reg [31:0] data_out;
   reg [31:0] RAM [0:127];
 
-
   initial
   begin
     /* Write your Verilog-Text IO code here */
+    $readmemh("memory_file.mem", RAM); 
   end
 
   assign Mem_Bus = ((CS == 1'b0) || (WE == 1'b1)) ? 32'bZ : data_out;

@@ -26,6 +26,7 @@ module MIPS_Testbench ();
   wire WE;
   wire [31:0] Mem_Bus;
   wire [6:0] Address;
+  integer i;
 
   initial
   begin
@@ -50,12 +51,15 @@ module MIPS_Testbench ();
     @(posedge CLK);
     // driving reset low here puts processor in normal operating mode
     RST = 1'b0;
-
+    
+    for(i=0; i<50; i = i+1) begin
+        @(posedge CLK);
+    end
     /* add your testing code here */
     // you can add in a 'Halt' signal here as well to test Halt operation
     // you will be verifying your program operation using the
     // waveform viewer and/or self-checking operations
-
+    
     $display("TEST COMPLETE");
     $stop;
   end
