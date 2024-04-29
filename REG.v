@@ -1,10 +1,11 @@
-module REG(CLK, RegW, DR, SR1, SR2, Reg_In, ReadReg1, ReadReg2);
+module REG(CLK, RegW, DR, SR1, SR2, Reg_In, R1_Low, ReadReg1, ReadReg2);
   input CLK;
   input RegW;
   input [4:0] DR;
   input [4:0] SR1;
   input [4:0] SR2;
   input [31:0] Reg_In;
+  output [7:0] R1_Low;
   output reg [31:0] ReadReg1;
   output reg [31:0] ReadReg2;
 
@@ -16,6 +17,11 @@ module REG(CLK, RegW, DR, SR1, SR2, Reg_In, ReadReg1, ReadReg2);
     ReadReg2 = 0;
   end
 
+  // Lifting lower 8 bits of R1 out
+  wire [31:0] R1_Full;
+  assign R1_Full = REG[1];
+  assign R1_Low = R1_Full[7:0];
+  
   always @(posedge CLK)
   begin
 

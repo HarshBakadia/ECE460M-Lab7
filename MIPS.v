@@ -27,11 +27,12 @@
 `define f_code instr[5:0]
 `define numshift instr[10:6]
 
-module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
-  input CLK, RST;
-  output reg CS, WE;
-  output [6:0] ADDR;
-  inout [31:0] Mem_Bus;
+module MIPS (
+  input CLK, RST,
+  output reg CS, WE,
+  output [7:0] R1_Out,
+  output [6:0] ADDR,
+  inout [31:0] Mem_Bus);
 
   //special instructions (opcode == 000000), values of F code (bits 5-0):
   parameter add = 6'b100000;
@@ -70,6 +71,8 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
   reg fetchDorI;
   wire [4:0] dr;
   reg [2:0] state, nstate;
+  
+  wire [7:0] R1_Low;
 
   //combinational
   assign imm_ext = (instr[15] == 1)? {16'hFFFF, instr[15:0]} : {16'h0000, instr[15:0]};//Sign extend immediate field
@@ -82,7 +85,7 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
 
   //drive memory bus only during writes
   assign ADDR = (fetchDorI)? pc : alu_result_save[6:0]; //ADDR Mux
-  REG Register(CLK, regw, dr, `sr1, `sr2, reg_in, readreg1, readreg2);
+  REG Register(CLK, regw, dr, `sr1, `sr2, reg_in, R1_Low, readreg1, readreg2);
 
   initial begin
     op = and1; opsave = and1;
@@ -188,6 +191,8 @@ module MIPS (CLK, RST, CS, WE, ADDR, Mem_Bus);
     else if (state == 3'd2) alu_result_save <= alu_result;
 
   end //always
+//////////////////////////////////////////////////////////////////////////////////
+  assign R1_Out = R1_Low;
 
 endmodule
 
