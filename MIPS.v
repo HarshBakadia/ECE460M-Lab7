@@ -29,8 +29,11 @@
 
 module MIPS (
   input CLK, RST,
+  input [2:0] SW,
+  input BTNR,
   output reg CS, WE,
   output [7:0] R1_Out,
+  output [15:0] R2_Disp,
   output [6:0] ADDR,
   inout [31:0] Mem_Bus);
 
@@ -85,7 +88,7 @@ module MIPS (
 
   //drive memory bus only during writes
   assign ADDR = (fetchDorI)? pc : alu_result_save[6:0]; //ADDR Mux
-  REG Register(CLK, regw, dr, `sr1, `sr2, reg_in, R1_Low, readreg1, readreg2);
+  REG Register(CLK, regw, SW, BTNR, dr, `sr1, `sr2, reg_in, R1_Low, readreg1, readreg2, R2_Disp);
 
   initial begin
     op = and1; opsave = and1;

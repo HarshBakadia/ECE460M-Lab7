@@ -12,7 +12,7 @@ module Memory(CS, WE, CLK, ADDR, Mem_Bus);
   initial
   begin
     /* Write your Verilog-Text IO code here */
-    $readmemb("LED_Rotate.mem", RAM);
+    $readmemb("LED_Rotate2.mem", RAM);
   end
 
   assign Mem_Bus = ((CS == 1'b0) || (WE == 1'b1)) ? 32'bZ : data_out;

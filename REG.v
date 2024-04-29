@@ -1,6 +1,8 @@
-module REG(CLK, RegW, DR, SR1, SR2, Reg_In, R1_Low, ReadReg1, ReadReg2);
+module REG(CLK, RegW, SW, BTNR, DR, SR1, SR2, Reg_In, R1_Low, ReadReg1, ReadReg2, R2_Disp);
   input CLK;
   input RegW;
+  input [2:0] SW;
+  input BTNR;
   input [4:0] DR;
   input [4:0] SR1;
   input [4:0] SR2;
@@ -8,6 +10,7 @@ module REG(CLK, RegW, DR, SR1, SR2, Reg_In, R1_Low, ReadReg1, ReadReg2);
   output [7:0] R1_Low;
   output reg [31:0] ReadReg1;
   output reg [31:0] ReadReg2;
+  output reg [15:0] R2_Disp;
 
   reg [31:0] REG [0:31];
   integer i;
@@ -30,5 +33,8 @@ module REG(CLK, RegW, DR, SR1, SR2, Reg_In, R1_Low, ReadReg1, ReadReg2);
 
     ReadReg1 <= REG[SR1];
     ReadReg2 <= REG[SR2];
+    ///// PART B MAPPINGS
+    REG[1][2:0] <= SW;
+    R2_Disp <= (BTNR ? REG[2][31:16] : REG[2][15:0]);
   end
 endmodule
